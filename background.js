@@ -4,31 +4,29 @@ String.prototype.times = function(n) { return n < 1 ? '':Array(n+1).join(this); 
 
 console.log("hello, guys");
 
-//var mimeType = "text/xml";
-var mimeType = "text/html";
-
 chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
   var url = msg.url;
-  if (msg.addPage) return addPage(url);
+  if (msg.addPage) addPage(url, sendResponse);
+  return true;
 });
 
-function addPage(url) {
+function addPage(url, sendResponse) {
   console.log("GET " + url);
+
   var xhr = new XMLHttpRequest();
   xhr.open('GET', url, true);
   xhr.onreadystatechange = function() {
     if (xhr.readyState === this.DONE) {
+      var resultMsg = '';
       console.log("XHR: ", xhr);
       console.log(xhr.responseText);
       console.log("XML: ", xhr.responseXML);
 
+      resultMsg = "Page saved " + (getPrev(url) ? "<b>again...</b>" : "!");
+
       store(url, xhr.responseText);
 
       diffStored(url);
-
-      // doesn't work
-      //var parser = new DOMParser();
-      //var prevXML = parser.parseFromString(getPrev(url), mimeType);
 
       var prevDiv = document.createElement("div");
       prevDiv.innerHTML = getPrev(url);
@@ -39,9 +37,10 @@ function addPage(url) {
       document.body.appendChild(currDiv);
 
       diffDOM(prevDiv, currDiv);
+      
+      sendResponse(resultMsg);
     }
   }
-  xhr.overrideMimeType(mimeType); // doesn't work with html
   xhr.send();
 }
 
