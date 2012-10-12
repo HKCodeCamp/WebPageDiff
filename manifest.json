@@ -1,0 +1,14 @@
+{
+	"name": "Web Page Diff",
+	"description": "Track when a web page changes.",
+	"version": "0.0.1",
+	"manifest_version": 2,
+	"browser_action": {
+		"default_icon" : "icon.png",
+		"default_title": "Add to Web Page Diff"
+	},
+	"background": {
+		"scripts": ["background.js"]
+	},
+	"permissions": ["http://*/"]
+}
