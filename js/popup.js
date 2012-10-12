@@ -9,9 +9,12 @@ $(function ($) {
     });
   });
   $('#manageList').on('click', function (evt) {
+    chrome.tabs.create({url:"list.html"});
+    /*
     chrome.runtime.getBackgroundPage(function(bgPage) {
       bgPage.console.log("manageList click");
     });
     window.close();
+    */
   });
 })(jQuery);
