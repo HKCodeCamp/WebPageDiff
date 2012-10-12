@@ -1,3 +1,5 @@
+/*global chrome:true */
+
 String.prototype.times = function(n) { return n < 1 ? '':Array(n+1).join(this); }
 
 console.log("hello, guys");
@@ -5,9 +7,12 @@ console.log("hello, guys");
 //var mimeType = "text/xml";
 var mimeType = "text/html";
 
-chrome.browserAction.onClicked.addListener(function(tab) {
-  console.log("TAB: ", tab);
-  var url = tab.url;
+chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
+  var url = msg.url;
+  if (msg.addPage) return addPage(url);
+});
+
+function addPage(url) {
   console.log("GET " + url);
   var xhr = new XMLHttpRequest();
   xhr.open('GET', url, true);
@@ -38,7 +43,7 @@ chrome.browserAction.onClicked.addListener(function(tab) {
   }
   xhr.overrideMimeType(mimeType); // doesn't work with html
   xhr.send();
-});
+}
 
 function prevKey(url) { return url + "$$$PREV"; }
 
