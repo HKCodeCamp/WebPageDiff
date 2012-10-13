@@ -45,6 +45,11 @@ if (!document.domPageCalled) {
 }
 
 function diffDOMPage(optPrev) {
+  if (optPrev) {
+    // TODO: clean this up, below we can only get document.body.innerHTML, not document.innerHTML
+    optPrev = optPrev.replace(/^.*<body>/i, '<body>');
+  }
+
   var html = document.body.innerHTML;
 
   var prevDiv = document.createElement("div");
