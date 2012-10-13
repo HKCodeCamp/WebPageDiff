@@ -5,12 +5,20 @@ String.prototype.times = function(n) { return n < 1 ? '':Array(n+1).join(this); 
 console.log("hello, guys");
 
 chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
-  var url = msg.url;
-  if (msg.addPage) addPage(url, sendResponse);
+  if (msg.addPage) {
+    addPage(msg, sendResponse);
+  } else if (msg.getList) {
+    // Get the whole list
+    chrome.storage.sync.get(null, function (items) {
+      sendResponse(items);
+    });
+  }
+  
   return true;
 });
 
-function addPage(url, sendResponse) {
+function addPage(msg, sendResponse) {
+  var url = msg.url;
   console.log("GET " + url);
 
   var xhr = new XMLHttpRequest();
@@ -37,6 +45,21 @@ function addPage(url, sendResponse) {
       document.body.appendChild(currDiv);
 
       diffDOM(prevDiv, currDiv);
+
+      // Save this entry to storage.sync
+      var lengthByte = 100;
+      var hash = "ABCDEFG";
+      var checkIntervalSecond = 600;
+      var item = {
+        url: {
+          title: msg.title,
+          dateAdd: Date.now(),
+          lengthByte: lengthByte,
+          hash: hash,
+          checkIntervalSecond: checkIntervalSecond
+        }
+      };
+      chrome.storage.sync.set(item);
       
       sendResponse(resultMsg);
     }

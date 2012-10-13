@@ -1,39 +1,20 @@
 /*global chrome:true */
 
-var fakeStorage = (function () {
-  var storage = {
-    diffList: [ {url:"http://twitter.github.com/bootstrap/index.html", title:"Twitter Bootstrap", dateAdd:1350049430341},
-                {url:"http://jquery.com/", title:"jQuery: The Write Less, Do More, JavaScript Library", dateAdd:1350049483242},
-                {url:"http://developer.chrome.com/extensions/overview.html", title:"Overview - Google Chrome", dateAdd:1350049528440}
-              ]
-  };
-
-  return {
-    setItem: function (key, value) {
-      storage[key] = value;
-      return value;
-    },
-
-    getItem: function (key) {
-      return storage[key];
-    },
-
-    removeItem: function (key) {
-      delete storage[key];
-    }
-  };
-})();
-
 $(function () {
-  var markup = '<div class="well well-large"><ul>';
-  var list = fakeStorage.getItem("diffList");
-  for (var i = 0, l=list.length; i<l; i++) {
-    markup += '<li>';
-    markup += '<a href="' + list[i].url + '">' + list[i].title + '</a>';
-    markup += '</li>';
-  }
-
-  markup += '</ul></div>';
-  $('#listContent').html(markup);
-
+  // Get all urls store in storage.sync
+  // item { key: value}
+  // { "http://twitter.github.com/bootstrap/index.html":
+  //      {title:"Twitter Bootstrap", dateAdd:1350049430341, length:10, hash:"EEEEEEEE", checkInterval:10}
+  //  }
+  chrome.extension.sendMessage({getList: true}, function(list) {
+    var markup = '<div class="well well-large"><ul>';
+    for (var item in list) {
+      markup += '<li>';
+      markup += '<a href="' + list[item] + '">' + list[item].title + '</a>';
+      markup += '</li>';
+    }
+    markup += '</ul></div>';
+    $('#listContent').html(markup);
+  });
 });
+

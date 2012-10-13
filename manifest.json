@@ -11,5 +11,8 @@
 	"background": {
 		"scripts": ["background.js"]
 	},
-	"permissions": ["tabs", "http://*/"]
+	"permissions": ["notifications", "storage", "tabs", "http://*/"],
+  "web_accessible_resources": [
+    "icon.png"
+  ]
 }
