@@ -14,8 +14,8 @@ chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
       sendResponse(items);
     });
   } else if (msg.checkDiffs) {
-    console.log("checkDiffs not implement");
-    sendResponse('Not implement');
+    console.log("checkDiffs not implemented");
+    sendResponse('Not implemented');
   } else if (msg.removeDiff) {
     console.log("msg.removeDiff");
     chrome.storage.sync.remove(msg.url, function () {
@@ -43,61 +43,31 @@ function addPage(msg, sendResponse) {
       resultMsg = "Page saved " + (getPrev(url) ? "again..." : "!");
 
       store(url, xhr.responseText);
-
       diffStored(url);
-
-      var prevDiv = document.createElement("div");
-      prevDiv.innerHTML = getPrev(url);
-      //document.body.appendChild(prevDiv);
-
-      var currDiv = document.createElement("div");
-      currDiv.innerHTML = getCurr(url);
-      //document.body.appendChild(currDiv);
-
-      diffDOM(prevDiv, currDiv, function(event, level, prev, curr) {
-		// TODO: make this annotate the DOM of the page to highlight changes
-		switch (event) {
-		case 'changed': {
-		  console.log('---DIFF.changed:', prev, curr);
-		  console.log('  DIFF.changed.prev:\n', prev.innerText)
-		  console.log('  DIFF.changed.curr:\n', curr.innerText);
-		  break;
-		}
-		case 'added'  : {
-		  console.log('---DIFF.added:', curr);
-		  console.log('  DIFF.added.curr:\n', curr.innerText);
-		  break;
-		}
-		case 'removed': {
-		  console.log('---DIFF.removed:', prev);
-		  console.log('  DIFF.removed.prev:\n', prev.innerText);
-		  break;
-		}
-		}
-	      });
-
-      diffDOM(prevDiv, currDiv);
-
-      // Save this entry to storage.sync
-      var lengthByte = 100;
-      var hash = "ABCDEFG";
-      var checkIntervalSecond = 600;
-      var changed = false;
-      var item= {};
-      item[url] = {
-          title: msg.title,
-          dateAdd: Date.now(),
-          lengthByte: lengthByte,
-          hash: hash,
-          checkIntervalSecond: checkIntervalSecond,
-          changed: changed
-      };
-      chrome.storage.sync.set(item);
-      
+      saveSynced(url, msg.title);
+ 
       sendResponse(resultMsg);
     }
   }
   xhr.send();
+}
+
+function saveSynced(url, title) {
+  // Save this entry to storage.sync
+  var lengthByte = 100;
+  var hash = "ABCDEFG";
+  var checkIntervalSecond = 600;
+  var changed = false;
+  var item = {};
+  item[url] = {
+    title: title,
+    dateAdd: Date.now(),
+    lengthByte: lengthByte,
+    hash: hash,
+    checkIntervalSecond: checkIntervalSecond,
+    changed: changed
+  };
+  chrome.storage.sync.set(item);
 }
 
 function prevKey(url) { return url + "$$$PREV"; }
@@ -118,7 +88,36 @@ function diffStored(url) {
     console.log("SAME SAME!");
     return false;
   }
-  return true;
+
+  var prevDiv = document.createElement("div");
+  prevDiv.innerHTML = getPrev(url);
+  //document.body.appendChild(prevDiv);
+
+  var currDiv = document.createElement("div");
+  currDiv.innerHTML = getCurr(url);
+  //document.body.appendChild(currDiv);
+
+  diffDOM(prevDiv, currDiv, function(event, level, prev, curr) {
+	    // TODO: make this annotate the DOM of the page to highlight changes
+	    switch (event) {
+	    case 'changed': {
+	      console.log('---DIFF.changed:', prev, curr);
+	      console.log('  DIFF.changed.prev:\n', prev.innerText)
+		console.log('  DIFF.changed.curr:\n', curr.innerText);
+	      break;
+	    }
+	    case 'added'  : {
+	      console.log('---DIFF.added:', curr);
+	      console.log('  DIFF.added.curr:\n', curr.innerText);
+	      break;
+	    }
+	    case 'removed': {
+	      console.log('---DIFF.removed:', prev);
+	      console.log('  DIFF.removed.prev:\n', prev.innerText);
+	      break;
+	    }
+	    }
+	  });
 }
 
 function diffDOM(prev, curr, diffNotifier) {
