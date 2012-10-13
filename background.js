@@ -1,6 +1,7 @@
 /*global chrome:true */
 
-String.prototype.times = function(n) { return n < 1 ? '':Array(n+1).join(this); }
+String.prototype.times = function(n) { return n < 1 ? '':Array(n+1).join(this); };
+function ArrayCopy(arr) { return Array.prototype.slice.call(arr); }
 
 console.log("hello, guys");
 
@@ -19,8 +20,6 @@ function addPage(url, sendResponse) {
     if (xhr.readyState === this.DONE) {
       var resultMsg = '';
       console.log("XHR: ", xhr);
-      console.log(xhr.responseText);
-      console.log("XML: ", xhr.responseXML);
 
       resultMsg = "Page saved " + (getPrev(url) ? "<b>again...</b>" : "!");
 
@@ -30,13 +29,33 @@ function addPage(url, sendResponse) {
 
       var prevDiv = document.createElement("div");
       prevDiv.innerHTML = getPrev(url);
-      document.body.appendChild(prevDiv);
+      //document.body.appendChild(prevDiv);
 
       var currDiv = document.createElement("div");
       currDiv.innerHTML = getCurr(url);
-      document.body.appendChild(currDiv);
+      //document.body.appendChild(currDiv);
 
-      diffDOM(prevDiv, currDiv);
+      diffDOM(prevDiv, currDiv, function(event, level, prev, curr) {
+		// TODO: make this annotate the DOM of the page to highlight changes
+		switch (event) {
+		case 'changed': {
+		  console.log('---DIFF.changed:', prev, curr);
+		  console.log('  DIFF.changed.prev:\n', prev.innerText)
+		  console.log('  DIFF.changed.curr:\n', curr.innerText);
+		  break;
+		}
+		case 'added'  : {
+		  console.log('---DIFF.added:', curr);
+		  console.log('  DIFF.added.curr:\n', curr.innerText);
+		  break;
+		}
+		case 'removed': {
+		  console.log('---DIFF.removed:', prev);
+		  console.log('  DIFF.removed.prev:\n', prev.innerText);
+		  break;
+		}
+		}
+	      });
       
       sendResponse(resultMsg);
     }
@@ -60,60 +79,70 @@ function diffStored(url) {
   var cur = getCurr(url);
   if (prev == cur) {
     console.log("SAME SAME!");
-    return;
+    return false;
   }
+  return true;
 }
 
-function diffDOM(prev, curr) {
+function diffDOM(prev, curr, diffNotifier) {
+  console.log("============================================================");
   console.log("diffDOM: ", prev, curr);
   console.log("DOM: ", document);
-  //traverse(0, prev);
-  //traverse(0, document);
-  pTraverse(0, prev, curr);
+  return pTraverse(0, prev, curr, diffNotifier);
 }
 
-function pTraverse(level, prev, curr) {
-  if (!prev || !curr) return;
-  if (prev instanceof Function) return;
-  if (prev instanceof Number) return;
-  if (prev instanceof String) return;
+function notHtml(node) {
+  return (!node)
+    || (node instanceof Function)
+    || (node instanceof Number)
+    || (node instanceof String);
+}  
 
-  if (curr instanceof Function) return;
-  if (curr instanceof Number) return;
-  if (curr instanceof String) return;
+function pTraverse(level, prev, curr, diffNotifier) {
+  if (notHtml(prev) || notHtml(curr)) return;
 
-  var prevC = prev.childNodes;
+  var prevC = ArrayCopy(prev.childNodes);
   if (!prevC) return;
 
-  var currC = curr.childNodes;
+  var currC = ArrayCopy(curr.childNodes);
   if (!currC) return;
 
-  // TODO: compare number of nodes, find inserted?
-  for (var i in currC) {
-    var nPrev = prevC[i];
-    var nCurr = currC[i];
-    if (nCurr instanceof HTMLElement) {
-      console.log('  '.times(level), "x=", i, nCurr, nCurr.innerText);
-      if (!nPrev) {
-	console.log('  '.times(level), "x=", i, "ADDED!\n");
-      } else if (nPrev.innerText == nCurr.innerText) {
-	console.log('  '.times(level), "x=", i, "not changed text\n");
-      } else {
-	console.log('  '.times(level), "x=", i, "CHANGED!\n");
-	pTraverse(level+1, nPrev, nCurr);
-      }
+  console.log("pTraverse: ", prevC, currC);
+
+  // Find changed or added this one DOES recurse
+  while (prevC.length || currC.length) {
+    var nPrev = prevC.shift();
+    var nCurr = currC.shift();
+    if (nCurr && !(nCurr instanceof HTMLElement)) continue;
+
+    // if no change don't go down rabbit hole
+    if (nPrev && nCurr && nPrev.innerText == nCurr.innerText) continue;
+
+    if (!nPrev || prevC.length < currC.length) {
+      // assume something added
+
+      diffNotifier('added', level, null, nCurr);
+      // try to sync up by "ignoring" changed/added item
+      nCurr = currC.shift();
+      pTraverse(level+1, nPrev, nCurr, diffNotifier);
+
+    } else if (!nCurr || prevC.length > currC.length) {
+      // assume something removed
+
+      if (nPrev) diffNotifier('removed', level, nPrev, nCurr);
+      // try to sync up by "ignoring" changed/removed item
+      nPrev = currC.shift();
+      pTraverse(level+1, nPrev, nCurr, diffNotifier);
+
+    } else {
+      // same length, assume changed
+
+      diffNotifier('changed', level, nPrev, nCurr);
+      pTraverse(level+1, nPrev, nCurr, diffNotifier);
     }
   }
-  for (var i in prevC) {
-    var nPrev = prevC[i];
-    var nCurr = currC[i];
-    if (nPrev instanceof HTMLElement) {
-      console.log('  '.times(level), "y=", i, nPrev, nPrev.innerText);
-      if (!nCurr) {
-	console.log('  '.times(level), "y=", i, "REMOVED!\n");
-      }
-    }
-  }
+
+  // TODO: if any remaining stuff in prevC report as removed
 }
 
 function traverse(level, node) {
