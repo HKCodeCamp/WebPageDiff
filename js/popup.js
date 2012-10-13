@@ -1,9 +1,24 @@
-/*global chrome:true */
+/*global chrome,webkitNotifications:true */
 
 $(function ($) {
   $('#addPage').on('click', function (evt) {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-      chrome.extension.sendMessage({addPage: true, url: tabs[0].url}, function(response) {
+      // Create the message object
+      var msg = {
+        addPage: true,
+        url: tabs[0].url
+      };
+      msg.title = tabs[0].title || "No Title";
+      // Send the message and use response to show notification
+      chrome.extension.sendMessage(msg, function(response) {
+        if (response) {
+          var notification = webkitNotifications.createNotification(
+            'icon.png',  // icon url - can be relative
+            'WebPageDiff',  // notification title
+            response  // notification body text
+          );
+          notification.show();
+        }
         window.close();
       });
     });
@@ -16,5 +31,25 @@ $(function ($) {
     });
     window.close();
     */
+  });
+  $('#checkDiffs').on('click', function (evt) {
+    var msg = { checkDiffs: true };
+    chrome.extension.sendMessage(msg, function(response) {
+      window.close();
+    });
+  });
+  $('#showDiff').on('click', function (evt) {
+    var msg = { showDiff: true };
+    chrome.extension.sendMessage(msg, function(response) {
+      if (response) {
+        var notification = webkitNotifications.createNotification(
+          'icon.png',  // icon url - can be relative
+          'WebPageDiff',  // notification title
+          response  // notification body text
+        );
+        notification.show();
+      }
+      window.close();
+    });
   });
 })(jQuery);

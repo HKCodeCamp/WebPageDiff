@@ -6,12 +6,31 @@ function ArrayCopy(arr) { return Array.prototype.slice.call(arr); }
 console.log("hello, guys");
 
 chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
-  var url = msg.url;
-  if (msg.addPage) addPage(url, sendResponse);
+  if (msg.addPage) {
+    addPage(msg, sendResponse);
+  } else if (msg.getList) {
+    // Get the whole list
+    chrome.storage.sync.get(null, function (items) {
+      sendResponse(items);
+    });
+  } else if (msg.checkDiffs) {
+    console.log("checkDiffs not implement");
+    sendResponse('Not implement');
+  } else if (msg.removeDiff) {
+    console.log("msg.removeDiff");
+    chrome.storage.sync.remove(msg.url, function () {
+      sendResponse("Item removed");
+    });
+  } else if (msg.showDiff) {
+    console.log("showDiff not implement");
+    sendResponse('showDiff Not implement');
+  }
+  
   return true;
 });
 
-function addPage(url, sendResponse) {
+function addPage(msg, sendResponse) {
+  var url = msg.url;
   console.log("GET " + url);
 
   var xhr = new XMLHttpRequest();
@@ -21,7 +40,7 @@ function addPage(url, sendResponse) {
       var resultMsg = '';
       console.log("XHR: ", xhr);
 
-      resultMsg = "Page saved " + (getPrev(url) ? "<b>again...</b>" : "!");
+      resultMsg = "Page saved " + (getPrev(url) ? "again..." : "!");
 
       store(url, xhr.responseText);
 
@@ -56,6 +75,24 @@ function addPage(url, sendResponse) {
 		}
 		}
 	      });
+
+      diffDOM(prevDiv, currDiv);
+
+      // Save this entry to storage.sync
+      var lengthByte = 100;
+      var hash = "ABCDEFG";
+      var checkIntervalSecond = 600;
+      var changed = false;
+      var item= {};
+      item[url] = {
+          title: msg.title,
+          dateAdd: Date.now(),
+          lengthByte: lengthByte,
+          hash: hash,
+          checkIntervalSecond: checkIntervalSecond,
+          changed: changed
+      };
+      chrome.storage.sync.set(item);
       
       sendResponse(resultMsg);
     }
