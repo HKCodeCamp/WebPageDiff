@@ -40,8 +40,8 @@ chrome.extension.onConnect.addListener(function(port) {
         //console.log("tabGetDiff message comes in");
         // Get the diff
         var url = msg.url;
-        var diff = '';
-        port.postMessage({bgReturnDiff: true, diff: diff});
+        var prev = getPrev(url);
+        port.postMessage({bgReturnDiff: true, prev: prev});
       }
 
       return true;
