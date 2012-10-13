@@ -6,25 +6,12 @@ function ArrayCopy(arr) { return Array.prototype.slice.call(arr); }
 // hack not to get called twice during reload/load page... (happends only for jsk)
 if (!document.domPageCalled) {
   diffDOMPage();
-}
-document.domPageCalled = 'true';
-
-function equalishString(a, b) {
-  if (a === b) return 'identical';
-  if (a == b) return 'equal';
-  if (a === undefined || b === undefined) return false;
-  if (a.trim() == b.trim()) return 'trimEqual';
-
-  var sa = a.replace(/\s/g, '');
-  var sb = b.replace(/\s/g, '');
-  if (sa == sb) return 'nospaceEqual';
-  if (a.length != b.length) return false; //'difflen(' + a.length + ', ' + b.length + ')';
-  if (a > b) return false; //"bigger(a, b)";
-  if (a < b) return false; //"less(a, b)";
-  return false //'different?';
+  document.domPageCalled = 'true';
 }
 
 function diffDOMPage() {
+  var html = document.body.innerHTML;
+
   var prevDiv = document.createElement("div");
   prevDiv.innerHTML = localStorage.getItem(document.URL);
 
@@ -56,7 +43,10 @@ function diffDOMPage() {
 	    }
 	    }
 	  });
+
+  localStorage.setItem(document.URL, html);
 }
+
 
 function diffDOMConsole(prev, curr) {
   diffDOM(prev, curr, function(event, level, prev, curr) {
@@ -80,6 +70,22 @@ function diffDOMConsole(prev, curr) {
 	    }
 	    }
 	  });
+}
+
+// turns out the document.body.innerHTML and document.body are "different", extra spaces near tags...
+function equalishString(a, b) {
+  if (a === b) return 'identical';
+  if (a == b) return 'equal';
+  if (a === undefined || b === undefined) return false;
+  if (a.trim() == b.trim()) return 'trimEqual';
+
+  var sa = a.replace(/\s/g, '');
+  var sb = b.replace(/\s/g, '');
+  if (sa == sb) return 'nospaceEqual';
+  if (a.length != b.length) return false; //'difflen(' + a.length + ', ' + b.length + ')';
+  if (a > b) return false; //"bigger(a, b)";
+  if (a < b) return false; //"less(a, b)";
+  return false //'different?';
 }
 
 function diffDOM(prev, curr, diffNotifier) {
