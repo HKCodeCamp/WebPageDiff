@@ -65,6 +65,7 @@ function diffDOMPage(optPrev) {
 	    // TODO: make this annotate the DOM of the page to highlight changes
 	    switch (event) {
 	    case 'changed': {
+	      if (!curr && !curr.style) return;
 	      curr.style.backgroundColor = 'lightblue';
 	      console.log('---DIFF.changed:', prev, curr, (prev.innerText == curr.innerText), equalishString(prev.innerText, curr.innerText));
 	      console.log('  DIFF.changed.prev:\n', prev.innerText)
@@ -72,6 +73,7 @@ function diffDOMPage(optPrev) {
 	      break;
 	    }
 	    case 'added'  : {
+	      if (!curr && !curr.style) return;
 	      curr.style.backgroundColor = 'lightgreen';
 	      console.log('---DIFF.added:', curr);
 	      console.log('  DIFF.added.curr:\n', curr.innerText);
@@ -161,6 +163,7 @@ function pTraverse(level, prev, curr, diffNotifier) {
   var nCurr = currC.shift();
   while (prevC.length || currC.length) {
     console.log("pTraverse.Q: ", nPrev, nCurr, prevC, currC);
+    //if (false)
     if (nCurr && !(nCurr instanceof HTMLElement)) {
       // nasty mess
       //if (!nPrev || prevC.length < currC.length) {
