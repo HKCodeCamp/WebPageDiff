@@ -8,9 +8,8 @@ port.onMessage.addListener(function(msg) {
   if (msg.bgReturnDiff) {
     console.log("Got the diff background");
     // ** Call the display diff here
+    console.log(msg.prev);
 
-  } else if (msg.bgShowDiff) {
-    console.log("Background want me to show diff");
   }
 });
 
