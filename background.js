@@ -12,6 +12,17 @@ chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
     chrome.storage.sync.get(null, function (items) {
       sendResponse(items);
     });
+  } else if (msg.checkDiffs) {
+    console.log("checkDiffs not implement");
+    sendResponse('Not implement');
+  } else if (msg.removeDiff) {
+    console.log("msg.removeDiff");
+    chrome.storage.sync.remove(msg.url, function () {
+      sendResponse("Item removed");
+    });
+  } else if (msg.showDiff) {
+    console.log("showDiff not implement");
+    sendResponse('showDiff Not implement');
   }
   
   return true;
@@ -30,7 +41,7 @@ function addPage(msg, sendResponse) {
       console.log(xhr.responseText);
       console.log("XML: ", xhr.responseXML);
 
-      resultMsg = "Page saved " + (getPrev(url) ? "<b>again...</b>" : "!");
+      resultMsg = "Page saved " + (getPrev(url) ? "again..." : "!");
 
       store(url, xhr.responseText);
 
@@ -50,14 +61,15 @@ function addPage(msg, sendResponse) {
       var lengthByte = 100;
       var hash = "ABCDEFG";
       var checkIntervalSecond = 600;
-      var item = {
-        url: {
+      var changed = false;
+      var item= {};
+      item[url] = {
           title: msg.title,
           dateAdd: Date.now(),
           lengthByte: lengthByte,
           hash: hash,
-          checkIntervalSecond: checkIntervalSecond
-        }
+          checkIntervalSecond: checkIntervalSecond,
+          changed: changed
       };
       chrome.storage.sync.set(item);
       

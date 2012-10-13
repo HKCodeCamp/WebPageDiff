@@ -32,4 +32,24 @@ $(function ($) {
     window.close();
     */
   });
+  $('#checkDiffs').on('click', function (evt) {
+    var msg = { checkDiffs: true };
+    chrome.extension.sendMessage(msg, function(response) {
+      window.close();
+    });
+  });
+  $('#showDiff').on('click', function (evt) {
+    var msg = { showDiff: true };
+    chrome.extension.sendMessage(msg, function(response) {
+      if (response) {
+        var notification = webkitNotifications.createNotification(
+          'icon.png',  // icon url - can be relative
+          'WebPageDiff',  // notification title
+          response  // notification body text
+        );
+        notification.show();
+      }
+      window.close();
+    });
+  });
 })(jQuery);
