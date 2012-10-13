@@ -33,10 +33,14 @@ $(function ($) {
     */
   });
   $('#checkDiffs').on('click', function (evt) {
+    chrome.tabs.create({url:"list.html"});
+
     var msg = { checkDiffs: true };
+    alert("click on checkDiffs");
     chrome.extension.sendMessage(msg, function(response) {
       window.close();
     });
+    alert("sent msg");
   });
   $('#showDiff').on('click', function (evt) {
     var msg = { showDiff: true };
