@@ -33,7 +33,7 @@ function addPage(url, sendResponse) {
       document.body.appendChild(prevDiv);
 
       var currDiv = document.createElement("div");
-      currDiv.innerHTML = getPrev(url);
+      currDiv.innerHTML = getCurr(url);
       document.body.appendChild(currDiv);
 
       diffDOM(prevDiv, currDiv);
@@ -67,9 +67,9 @@ function diffStored(url) {
 function diffDOM(prev, curr) {
   console.log("diffDOM: ", prev, curr);
   console.log("DOM: ", document);
-  traverse(0, prev);
+  //traverse(0, prev);
   //traverse(0, document);
-  //pTraverse(0, docu);
+  pTraverse(0, prev, curr);
 }
 
 function pTraverse(level, prev, curr) {
@@ -89,13 +89,30 @@ function pTraverse(level, prev, curr) {
   if (!currC) return;
 
   // TODO: compare number of nodes, find inserted?
-  for (var i in c) {
-    //if (!(i instanceof Number)) return; // not HTML element?
-    var n = c[i];
-    if (n instanceof HTMLElement) {
-      console.log(' '.times(level*2), "i=", i, n, n.innerText);
+  for (var i in currC) {
+    var nPrev = prevC[i];
+    var nCurr = currC[i];
+    if (nCurr instanceof HTMLElement) {
+      console.log('  '.times(level), "x=", i, nCurr, nCurr.innerText);
+      if (!nPrev) {
+	console.log('  '.times(level), "x=", i, "ADDED!\n");
+      } else if (nPrev.innerText == nCurr.innerText) {
+	console.log('  '.times(level), "x=", i, "not changed text\n");
+      } else {
+	console.log('  '.times(level), "x=", i, "CHANGED!\n");
+	pTraverse(level+1, nPrev, nCurr);
+      }
     }
-    traverse(level+1, n);
+  }
+  for (var i in prevC) {
+    var nPrev = prevC[i];
+    var nCurr = currC[i];
+    if (nPrev instanceof HTMLElement) {
+      console.log('  '.times(level), "y=", i, nPrev, nPrev.innerText);
+      if (!nCurr) {
+	console.log('  '.times(level), "y=", i, "REMOVED!\n");
+      }
+    }
   }
 }
 
