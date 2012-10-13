@@ -22,11 +22,40 @@ chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
       sendResponse("Item removed");
     });
   } else if (msg.showDiff) {
-    console.log("showDiff not implement");
-    sendResponse('showDiff Not implement');
+    console.log("showDiff: sendMessage to content script. tabid=" + msg.tabId);
+    /*
+    // Message content script
+    var message = {
+      showDiff: true
+    };
+    chrome.tabs.sendMessage(msg.tabId, message, function(response) {
+      console.log("showDiff: content script responded: " + response);
+      // Response nothing to popup
+      sendResponse('');
+    });
+    */
+    sendResponse('');
   }
   
   return true;
+});
+
+// To talk to content scripts
+chrome.extension.onConnect.addListener(function(port) {
+  console.assert(port.name === "showDiff");
+  port.onMessage.addListener(function(msg) {
+    //console.log("received something");
+    //console.log(msg);
+    if (msg.tabGetDiff) {
+      //console.log("tabGetDiff message comes in");
+      // Get the diff
+      var url = msg.url;
+      var diff = '';
+      port.postMessage({bgReturnDiff: true, diff: diff});
+    }
+
+    return true;
+  });
 });
 
 function addPage(msg, sendResponse) {
