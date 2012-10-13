@@ -6,7 +6,8 @@ $(function ($) {
       // Create the message object
       var msg = {
         addPage: true,
-        url: tabs[0].url
+        url: tabs[0].url,
+        tabId: tabs[0].id
       };
       msg.title = tabs[0].title || "No Title";
       // Send the message and use response to show notification
@@ -43,17 +44,16 @@ $(function ($) {
     alert("sent msg");
   });
   $('#showDiff').on('click', function (evt) {
-    var msg = { showDiff: true };
-    chrome.extension.sendMessage(msg, function(response) {
-      if (response) {
-        var notification = webkitNotifications.createNotification(
-          'icon.png',  // icon url - can be relative
-          'WebPageDiff',  // notification title
-          response  // notification body text
-        );
-        notification.show();
-      }
-      window.close();
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      // Create the message object
+      var msg = {
+        showDiff: true,
+        url: tabs[0].url,
+        tabId: tabs[0].id
+      };
+      chrome.extension.sendMessage(msg, function(response) {
+        window.close();
+      });
     });
   });
 })(jQuery);

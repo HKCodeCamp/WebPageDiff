@@ -1,4 +1,39 @@
-console.log("I am here...");
+/*global chrome:true*/
+
+console.log("I am here in showdiff.js");
+
+// To talk to background
+var port = chrome.extension.connect({name: "background"});
+
+// To listen to background
+chrome.extension.onConnect.addListener(function(thisPort) {
+  if (thisPort.name === "showdiff") {
+    console.log("Incoming connection:");
+    thisPort.onMessage.addListener(function(msg) {
+      if (msg.showDiff) {
+        console.log("showDiff message comes in");
+        // Ask background for diff of the given url
+        port.postMessage({tabGetDiff: true, url: location.href});
+      }
+
+      return true;
+    });
+  }
+});
+
+// this is eventually called because post.postMessage above will send
+// us a message below.
+port.onMessage.addListener(function(msg) {
+  if (msg.bgReturnDiff) {
+    console.log("Got the diff background");
+
+    // ** Call the display diff here
+    diffDOMPage(msg.prev);
+
+  } else if (msg.bgShowDiff) {
+    console.log("Background want me to show diff");
+  }
+});
 
 String.prototype.times = function(n) { return n < 1 ? '':Array(n+1).join(this); };
 function ArrayCopy(arr) { return Array.prototype.slice.call(arr); }
@@ -9,11 +44,12 @@ if (!document.domPageCalled) {
   document.domPageCalled = 'true';
 }
 
-function diffDOMPage() {
+function diffDOMPage(optPrev) {
   var html = document.body.innerHTML;
 
   var prevDiv = document.createElement("div");
-  prevDiv.innerHTML = localStorage.getItem(document.URL);
+  // if no prev, then we're called locally so use "localStorage"
+  prevDiv.innerHTML = optPrev || localStorage.getItem(document.URL);
 
   var prev = prevDiv;
   var curr = document.body;
@@ -168,5 +204,4 @@ function pTraverse(level, prev, curr, diffNotifier) {
 }
 
 console.log("I am outta here!");
-
 
