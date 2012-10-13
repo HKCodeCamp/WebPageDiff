@@ -40,14 +40,16 @@ function ArrayCopy(arr) { return Array.prototype.slice.call(arr); }
 
 // hack not to get called twice during reload/load page... (happends only for jsk)
 if (!document.domPageCalled) {
-  diffDOMPage();
+  //diffDOMPage();
   document.domPageCalled = 'true';
 }
 
 function diffDOMPage(optPrev) {
   if (optPrev) {
+    optPrev = optPrev.toString();
     // TODO: clean this up, below we can only get document.body.innerHTML, not document.innerHTML
-    optPrev = optPrev.replace(/^.*<body>/i, '<body>');
+    optPrev = optPrev.replace(/[\s\S]*<body>/mi, '<body>').replace(/<\/body>[\s\S]*/mi, '</body>');
+    console.log("DIFF: " + optPrev);
   }
 
   var html = document.body.innerHTML;
