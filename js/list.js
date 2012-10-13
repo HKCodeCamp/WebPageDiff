@@ -40,42 +40,33 @@ $(function () {
     markup += '</table>';
     markup += '</div>';
     $('#listContent').html(markup);
-  });
 
-    $('body').on('click', function(evt) {
-      //evt.preventDefault();
-      //evt.stopPropagation();
-      if ($(evt.currentTarget).hasClass('clickListItem')) {
-        evt.preventDefault();
-        evt.stopPropagation();
-        console.log('a.clickListItem');
-        //chrome.tabs.create({url: $(evt.document.location.reload(true)currentTarget).attr("href")});
-      }
+    $('a.clickListItem').on('click', function(evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+      console.log('a.clickListItem');
+      chrome.tabs.create({url: $(evt.currentTarget).attr("href")});
     });
 
-    $('body').on('click', function(evt) {
-      //evt.preventDefault();
-      //evt.stopPropagation();
+    /*
+    $('a.removeListItem').on('click', function(evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
       console.log("removeListItem");
-      if ($(evt.currentTarget).hasClass('removeListItem')) {
-        evt.preventDefault();
-        evt.stopPropagation();
-        //removeListItem($(evt.currentTarget).attr("href"));
-        var url = $(evt.currentTarget).attr("href");
-        chrome.extension.sendMesssage({removeDiff:true, url: url}, function(response) {
-          /*
-          if (response) {
-            var notification = webkitNotifications.createNotification(
-              'icon.png',  // icon url - can be relative
-              'WebPageDiff',  // notification title
-              response  // notification body text
-            );
-            notification.show();
-          }
-          document.location.reload(true);
-          */
-        });
-      }
+      var url = $(evt.currentTarget).attr("href");
+      chrome.extension.sendMesssage({removeDiff:true, url: url}, function(response) {
+        if (response) {
+          var notification = webkitNotifications.createNotification(
+            'icon.png',  // icon url - can be relative
+            'WebPageDiff',  // notification title
+            response  // notification body text
+          );
+          notification.show();
+        }
+        document.location.reload(true);
+      });
     });
+    */
+  });
 });
 
