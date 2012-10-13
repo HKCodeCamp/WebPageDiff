@@ -46,9 +46,10 @@ $(function () {
       evt.stopPropagation();
       console.log('a.clickListItem');
       chrome.tabs.create({url: $(evt.currentTarget).attr("href")}, function (tab) {
-        // To talk to content scripts
-        var port = chrome.tabs.connect(tab.id, {name: "showdiff"});
-        port.postMessage({showDiff:true});
+        chrome.tabs.executeScript(tab.id, {
+          code: 'port.postMessage({tabGetDiff: true, url: location.href})',
+          runAt: 'document_idle'
+        });
       });
     });
 

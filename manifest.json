@@ -17,7 +17,7 @@
       "matches": ["*://*/*"],
       "run_at": "document_idle",
       "css": ["mystyles.css"],
-      "js": ["js/showdiff.js", "js/showdiff.js"]
+      "js": ["js/showdiff.js"]
     }
   ],
   "web_accessible_resources": [
