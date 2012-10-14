@@ -1,7 +1,5 @@
 /*global chrome:true */
 
-console.log("hello, guys");
-
 chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
   if (msg.addPage) {
     addPage(msg, sendResponse);
@@ -21,27 +19,20 @@ chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
   } else if (msg.showDiff) {
     console.log("showDiff: sendMessage to content script. tabid=" + msg.tabId);
     // To talk to content scripts
-    var port = chrome.tabs.connect(msg.tabId, {name: "showdiff"});
-    port.postMessage({showDiff:true});
+    var contentScript = chrome.tabs.connect(msg.tabId, {name: "showdiff"});
+    contentScript.postMessage({showDiff:true});
     sendResponse('');
   }
   
   return true;
 });
 
-
 // To listen to content scripts
 chrome.extension.onConnect.addListener(function(port) {
   if (port.name === "background") {
     port.onMessage.addListener(function(msg) {
-      //console.log("received something");
-      //console.log(msg);
       if (msg.tabGetDiff) {
-        //console.log("tabGetDiff message comes in");
-        // Get the diff
-        var url = msg.url;
-        var prev = getPrev(url);
-        port.postMessage({bgReturnDiff: true, prev: prev});
+        port.postMessage({bgReturnDiff: true, prev: getCurr(msg.url)});
       }
 
       return true;
@@ -63,7 +54,7 @@ function addPage(msg, sendResponse) {
       resultMsg = "Page saved " + (getPrev(url) ? "again..." : "!");
 
       store(url, xhr.responseText);
-      diffStored(url);
+      //diffStored(url);
       saveSynced(url, msg.title);
  
       sendResponse(resultMsg);
@@ -111,13 +102,9 @@ function diffStored(url) {
 
   var prevDiv = document.createElement("div");
   prevDiv.innerHTML = getPrev(url);
-  //document.body.appendChild(prevDiv);
 
   var currDiv = document.createElement("div");
   currDiv.innerHTML = getCurr(url);
-  //document.body.appendChild(currDiv);
   
   diffDOMConsole(prevDiv, currDiv);
 }
-
-console.log("loaded...");

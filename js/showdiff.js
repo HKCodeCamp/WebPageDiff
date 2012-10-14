@@ -38,11 +38,8 @@ chrome.extension.onConnect.addListener(function(thisPort) {
 String.prototype.times = function(n) { return n < 1 ? '':Array(n+1).join(this); };
 function ArrayCopy(arr) { return Array.prototype.slice.call(arr); }
 
-// hack not to get called twice during reload/load page... (happends only for jsk)
-if (!document.domPageCalled) {
-  //diffDOMPage();
-  document.domPageCalled = 'true';
-}
+// Enable this line to have it check diff everytime a webpage is loaded!
+//diffDOMPage();
 
 function diffDOMPage(optPrev) {
   if (optPrev) {
@@ -65,23 +62,29 @@ function diffDOMPage(optPrev) {
 	    // TODO: make this annotate the DOM of the page to highlight changes
 	    switch (event) {
 	    case 'changed': {
-	      if (!curr && !curr.style) return;
+	      if (!curr || !curr.style) return;
 	      curr.style.backgroundColor = 'lightblue';
+	      //curr.style.backgroundColor = 'rgb(3,62,248)'== dark; 7,235,248
+	      var r = 7; var g = 255-level*48; g = Math.abs(g);
+	      curr.style.backgroundColor = 'rgb(' + r + ',' + g + ',248)';
 	      console.log('---DIFF.changed:', prev, curr, (prev.innerText == curr.innerText), equalishString(prev.innerText, curr.innerText));
 	      console.log('  DIFF.changed.prev:\n', prev.innerText)
 		console.log('  DIFF.changed.curr:\n', curr.innerText);
 	      break;
 	    }
 	    case 'added'  : {
-	      if (!curr && !curr.style) return;
+	      if (!curr || !curr.style) return;
 	      curr.style.backgroundColor = 'lightgreen';
+	      //curr.style.backgroundColor = 0x000000 + (256*256-level*16*256);
 	      console.log('---DIFF.added:', curr);
 	      console.log('  DIFF.added.curr:\n', curr.innerText);
 	      break;
 	    }
 	    case 'removed': {
+	      if (!curr || !prev || !prev.style) return;
 	      // TODO: consider to insert removed element with lightred color...
-	      //curr.style.backgroundColor = 'pink';
+	      prev.style.backgroundColor = 'pink';
+	      curr.insertAdjacentElement && curr.insertAdjacentElement('afterend', prev);
 	      console.log('---DIFF.removed:', prev);
 	      console.log('  DIFF.removed.prev:\n', prev.innerText);
 	      break;
@@ -91,7 +94,6 @@ function diffDOMPage(optPrev) {
 
   localStorage.setItem(document.URL, html);
 }
-
 
 function diffDOMConsole(prev, curr) {
   diffDOM(prev, curr, function(event, level, prev, curr) {
@@ -156,27 +158,16 @@ function pTraverse(level, prev, curr, diffNotifier) {
   var currC = ArrayCopy(curr.childNodes);
   if (!currC) return;
 
-  console.log("pTraverse: ", prev.childNodes, curr.childNodes);
+  //console.log("pTraverse: ", prev.childNodes, curr.childNodes);
 
   // Find changed or added this one DOES recurse
   var nPrev = prevC.shift();
   var nCurr = currC.shift();
   while (prevC.length || currC.length) {
-    console.log("pTraverse.Q: ", nPrev, nCurr, prevC, currC);
-    //if (false)
-    if (nCurr && !(nCurr instanceof HTMLElement)) {
-      // nasty mess
-      //if (!nPrev || prevC.length < currC.length) {
-      //nCurr = currC.shift();
-      //} else if (!nCurr || prevC.length > currC.length) {
-      //	nPrev = prevC.shift();
-      //} else
-      {
-	nPrev = prevC.shift();
-	nCurr = currC.shift();
-      }
-      continue;
-    }
+
+    console.log("pTraverse.Q: ", prevC.length, currC.length,
+		equalishString(nPrev && nPrev.innerText, nCurr && nCurr.innerText),
+		nPrev, nCurr);
 
     // if no change don't go down rabbit hole
     if (nPrev && nCurr && equalishString(nPrev.innerText, nCurr.innerText)) {
