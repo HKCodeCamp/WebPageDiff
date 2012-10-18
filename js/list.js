@@ -1,27 +1,8 @@
 /*global chrome,webkitNotifications:true */
 
-$(function () {
-  // Get all urls store in storage.sync
-  // item { key: value}
-  // { "http://twitter.github.com/bootstrap/index.html":
-  //      {title:"Twitter Bootstrap", dateAdd:1350049430341, length:10, hash:"EEEEEEEE", checkInterval:10}
-  //  }
-
-  function removeListItem(url) {
-    chrome.extension.sendMesssage({removeDiff:true, url: url}, function(response) {
-      if (response) {
-        var notification = webkitNotifications.createNotification(
-          'icon.png',  // icon url - can be relative
-          'WebPageDiff',  // notification title
-          response  // notification body text
-        );
-        notification.show();
-      }
-      document.location.reload(true);
-    });
-  }
-
-  chrome.extension.sendMessage({getList: true}, function(list) {
+function DOMReady() {
+  // Get diff list
+  chrome.storage.sync.get(null, function (list) {
     var markup = '';
     markup = '<div class="span10 offset1">';
     markup += '<table class="table table-condensed table-striped table-hover">';
@@ -34,44 +15,44 @@ $(function () {
         markup += '<i class="icon-minus"></i>';
       }
       markup += ' <a class="clickListItem" href="' + item + '">' + list[item].title + '</a></td>';
-      markup += '<td><a class="btn removeListItem" href="' + item + '"><i class="icon-remove-sign"></i> Remove</a></td>';
+      markup += '<td><a id="' + item + '"class="btn" href="#"><i class="icon-remove-sign"></i> Remove</a></td>';
       markup += '</tr>';
     }
     markup += '</table>';
     markup += '</div>';
-    $('#listContent').html(markup);
-
-    $('a.clickListItem').on('click', function(evt) {
-      evt.preventDefault();
-      evt.stopPropagation();
-      console.log('a.clickListItem');
-      chrome.tabs.create({url: $(evt.currentTarget).attr("href")}, function (tab) {
-        chrome.tabs.executeScript(tab.id, {
-          code: 'port.postMessage({tabGetDiff: true, url: location.href})',
-          runAt: 'document_idle'
+    document.getElementById('listContent').innerHTML = markup;
+    
+    // Binding event to page link
+    var links = document.getElementById('listContent').getElementsByClassName('clickListItem');
+    for (var i=0,l=links.length; i<l; i++) {
+      //console.log(links[i].href);
+      links[i].addEventListener('click', function (evt) {
+        evt.preventDefault();
+        var url = this.href;
+        chrome.tabs.create({url: url}, function (tab) {
+          chrome.tabs.executeScript(tab.id, {
+            code: 'console.log("executeScript");chrome.storage.local.get("' + url + '", function (prev) { diffDOMPage(prev["' + url + '"]); });',
+            runAt: 'document_idle'
+          });
         });
       });
-    });
-
-    /*
-    $('a.removeListItem').on('click', function(evt) {
-      evt.preventDefault();
-      evt.stopPropagation();
-      console.log("removeListItem");
-      var url = $(evt.currentTarget).attr("href");
-      chrome.extension.sendMesssage({removeDiff:true, url: url}, function(response) {
-        if (response) {
-          var notification = webkitNotifications.createNotification(
-            'icon.png',  // icon url - can be relative
-            'WebPageDiff',  // notification title
-            response  // notification body text
-          );
-          notification.show();
-        }
-        document.location.reload(true);
+    }
+    
+    // Binding event to Remove button
+    for (item in list) {
+      document.getElementById(item).addEventListener('click', function (evt) {
+        evt.preventDefault();
+        var id = this.id;
+        chrome.storage.sync.remove(id, function () {
+          chrome.storage.local.remove([id, id+"$$$PREV"], function () {
+            // Redraw the current page
+            DOMReady();
+          });
+        });
       });
-    });
-    */
+    }
   });
-});
+}
 
+// Binding events when DOM ready
+document.addEventListener("DOMContentLoaded", DOMReady);
