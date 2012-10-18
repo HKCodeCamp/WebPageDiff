@@ -3,41 +3,13 @@
 chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
   if (msg.msg === 'popupAddPage') {
     addPage(msg, sendResponse);
-  } else if (msg.getList) {
-    // Get the whole list
-    chrome.storage.sync.get(null, function (items) {
-      sendResponse(items);
-    });
+
   } else if (msg.msg === 'popupCheckDiffs') {
     console.log("checkDiffs not implemented");
     sendResponse('Not implemented');
-  } else if (msg.removeDiff) {
-    console.log("msg.removeDiff");
-    chrome.storage.sync.remove(msg.url, function () {
-      sendResponse("Item removed");
-    });
-  } else if (msg.msg === 'popupShowDiff') {
-    console.log("showDiff: sendMessage to content script. tabid=" + msg.tabId);
-    // To talk to content scripts
-    var contentScript = chrome.tabs.connect(msg.tabId, {name: "showdiff"});
-    contentScript.postMessage({showDiff:true});
-    sendResponse('');
   }
   
   return true;
-});
-
-// To listen to content scripts
-chrome.extension.onConnect.addListener(function(port) {
-  if (port.name === "background") {
-    port.onMessage.addListener(function(msg) {
-      if (msg.tabGetDiff) {
-        port.postMessage({bgReturnDiff: true, prev: getCurr(msg.url)});
-      }
-
-      return true;
-    });
-  }
 });
 
 function addPage(msg, sendResponse) {
@@ -51,6 +23,7 @@ function addPage(msg, sendResponse) {
       var resultMsg = '';
       console.log("XHR: ", xhr);
 
+      /*
       resultMsg = "Page saved " + (getPrev(url) ? "again..." : "!");
 
       store(url, xhr.responseText);
@@ -58,12 +31,26 @@ function addPage(msg, sendResponse) {
       saveSynced(url, msg.title);
  
       sendResponse(resultMsg);
+      */
+
+      // Check that this page has been added
+      chromeGetPrev(url, function (item) {
+        resultMsg = "Page saved " + (item ? "again..." : "!");
+        // Save url's content to chrome.storage.local
+        chromeStore(url, xhr.responseText, function () {
+          // Add url pageList at chrome.storage.sync
+          saveSynced(url, msg.title, function () {
+            // Finally, response the 'addPage' message
+            sendResponse(resultMsg);
+          });
+        });
+      });
     }
-  }
+  };
   xhr.send();
 }
 
-function saveSynced(url, title) {
+function saveSynced(url, title, callback) {
   // Save this entry to storage.sync
   var lengthByte = 100;
   var hash = "ABCDEFG";
@@ -78,7 +65,9 @@ function saveSynced(url, title) {
     checkIntervalSecond: checkIntervalSecond,
     changed: changed
   };
-  chrome.storage.sync.set(item);
+  chrome.storage.sync.set(item, function () {
+    callback();
+  });
 }
 
 function prevKey(url) { return url + "$$$PREV"; }
@@ -107,4 +96,31 @@ function diffStored(url) {
   currDiv.innerHTML = getCurr(url);
   
   diffDOMConsole(prevDiv, currDiv);
+}
+
+function chromeGetPrev(url, callback) {
+  chrome.storage.local.get(prevKey(url), function (value) {
+    callback(value);
+  });
+}
+
+function chromeGetCurr(url, callback) {
+  chrome.storage.local.get(url, function (value) {
+    callback(value);
+  });
+}
+
+function chromeStore(url, responseText, callback) {
+  chromeGetCurr(url, function (curr) {
+    var item = {};
+    item[prevKey(url)] = curr[url] || '';
+    console.log(curr);
+    chrome.storage.local.set(item, function () {
+      var i = {};
+      i[url] = responseText;
+      chrome.storage.local.set(i, function () {
+        callback();
+      });
+    });
+  });
 }
