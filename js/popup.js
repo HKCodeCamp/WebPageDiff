@@ -1,11 +1,13 @@
 /*global chrome,webkitNotifications:true */
 
-$(function ($) {
-  $('#addPage').on('click', function (evt) {
+function setupEvent() {
+  // Add current page for diff checking
+  var el = document.getElementById("addPage");
+  el.addEventListener('click', function() {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       // Create the message object
       var msg = {
-        addPage: true,
+        msg: 'popupAddPage',
         url: tabs[0].url,
         tabId: tabs[0].id
       };
@@ -24,30 +26,30 @@ $(function ($) {
       });
     });
   });
-  $('#manageList').on('click', function (evt) {
-    chrome.tabs.create({url:"list.html"});
-    /*
-    chrome.runtime.getBackgroundPage(function(bgPage) {
-      bgPage.console.log("manageList click");
-    });
-    window.close();
-    */
-  });
-  $('#checkDiffs').on('click', function (evt) {
-    chrome.tabs.create({url:"list.html"});
 
-    var msg = { checkDiffs: true };
-    alert("click on checkDiffs");
+  // Open the List Manager
+  el = document.getElementById('manageList');
+  el.addEventListener('click', function () {
+    chrome.tabs.create({url:"list.html"});
+  });
+  
+  // Manually check diffs of saved page
+  el = document.getElementById('checkDiffs');
+  el.addEventListener('click', function () {
+    // Create the message
+    var msg = { msg: 'popupCheckDiffs' };
     chrome.extension.sendMessage(msg, function(response) {
       window.close();
     });
-    alert("sent msg");
   });
-  $('#showDiff').on('click', function (evt) {
+  
+  // Show diff of the current page
+  el = document.getElementById('showDiff');
+  el.addEventListener('click', function () {
     chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
       // Create the message object
       var msg = {
-        showDiff: true,
+        msg: 'popupShowDiff',
         url: tabs[0].url,
         tabId: tabs[0].id
       };
@@ -56,4 +58,7 @@ $(function ($) {
       });
     });
   });
-})(jQuery);
+}
+
+// Binding events when DOM ready
+document.addEventListener("DOMContentLoaded", setupEvent);

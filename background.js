@@ -1,14 +1,14 @@
 /*global chrome:true */
 
 chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
-  if (msg.addPage) {
+  if (msg.msg === 'popupAddPage') {
     addPage(msg, sendResponse);
   } else if (msg.getList) {
     // Get the whole list
     chrome.storage.sync.get(null, function (items) {
       sendResponse(items);
     });
-  } else if (msg.checkDiffs) {
+  } else if (msg.msg === 'popupCheckDiffs') {
     console.log("checkDiffs not implemented");
     sendResponse('Not implemented');
   } else if (msg.removeDiff) {
@@ -16,7 +16,7 @@ chrome.extension.onMessage.addListener(function(msg, _, sendResponse) {
     chrome.storage.sync.remove(msg.url, function () {
       sendResponse("Item removed");
     });
-  } else if (msg.showDiff) {
+  } else if (msg.msg === 'popupShowDiff') {
     console.log("showDiff: sendMessage to content script. tabid=" + msg.tabId);
     // To talk to content scripts
     var contentScript = chrome.tabs.connect(msg.tabId, {name: "showdiff"});
